@@ -74,6 +74,7 @@
   - [Types or Interfaces?](#types-or-interfaces)
   - [Basic Prop Types Examples](#basic-prop-types-examples)
   - [Useful React Prop Type Examples](#useful-react-prop-type-examples)
+  - [Components with Children](#components-with-children)
   - [getDerivedStateFromProps](#getDerivedStateFromProps)
   - [Forms and Events](#forms-and-events)
   - [Context](#context)
@@ -673,6 +674,59 @@ export declare interface AppProps {
   onChange?: React.FormEventHandler<HTMLInputElement>; // form events! the generic parameter is the type of event.target
   props: Props & React.PropsWithoutRef<JSX.IntrinsicElements["button"]>; // to impersonate all the props of a button element without its ref
 }
+```
+
+### Components with children
+
+`children` is usually not defined as a part of the props type. Unless `children` are explicitly defined as a part of the `props` type, an attempt to use `props.children` in JSX or in the function body will fail:
+
+```tsx
+interface WrapperProps {
+  dataId: number;
+}
+
+/* Property 'children' does not exist on type 'WrapperProps'. */
+const Wrapper = (props: WrapperProps) => {
+  return <div data-id={props.dataId}>{props.children}</div>;
+};
+
+/*
+Type '{ children: Element; dataId: string; }' is not assignable to type 'IntrinsicAttributes & TempProps'.
+  Property 'children' does not exist on type 'IntrinsicAttributes & TempProps'.
+*/
+const wrapper = (
+  <Wrapper dataId="test">
+    <span>Hello World!</span>
+  </Wrapper>
+);
+```
+
+To work around that, either add `children` to the `WrapperProps` definition (possibly narrowing down its type, as needed):
+
+```tsx
+interface WrapperProps {
+  dataId: string;
+
+  // The component will only accept a single string child
+  children: string;
+  // To accept any Renderable Element use React.ReactNode
+}
+
+const Wrapper = (props: WrapperProps) => {
+  return <div data-id={props.dataId}>{props.children}</div>;
+};
+```
+
+or wrap the type of the props in `React.PropsWithChildren` (this is what `React.FC<>` does):
+
+```tsx
+interface WrapperProps {
+  dataId: number;
+}
+
+const Wrapper = (props: React.PropsWithChildren<WrapperProps>) => {
+  return <div data-id={props.dataId}>{props.children}</div>;
+};
 ```
 
 <details>
